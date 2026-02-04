@@ -1,6 +1,3 @@
-// TopHeader.jsx Enhancement Guide
-// Update your existing TopHeader component to support the new screens
-
 import React, { useState } from 'react';
 import {
   View,
@@ -79,8 +76,7 @@ const TopHeader = ({
           </TouchableOpacity>
         ) : (
           <View style={styles.logoContainer}>
-            <Ionicons name="book" size={28} color={textColor} />
-            <Text style={[styles.logo, { color: textColor }]}>Seagle</Text>
+            <Image source={require('../../assets/logo-icon-top.png')} style={styles.logo} />
           </View>
         )}
       </View>
@@ -228,9 +224,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginLeft: 10,
+    width: 90,
+    height: 30,
+    marginLeft: 12
   },
   title: {
     fontSize: 18,
@@ -276,13 +272,7 @@ const styles = StyleSheet.create({
     padding: 8,
     minWidth: 160,
     elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
+    boxShadow: '0px 4px 4.65px rgba(0, 0, 0, 0.3)',
   },
   dropdownItem: {
     flexDirection: 'row',
@@ -307,48 +297,3 @@ const styles = StyleSheet.create({
 });
 
 export default TopHeader;
-
-// ============================================
-// USAGE EXAMPLES
-// ============================================
-
-/*
-1. Default Header (Home Screen):
-   <TopHeader />
-
-2. Header with Back Button (BookDetails Screen):
-   <TopHeader 
-     showBackButton={true}
-     onBackPress={() => navigation.goBack()}
-   />
-
-3. Header with Title (BookDetails Screen):
-   <TopHeader 
-     showBackButton={true}
-     title="Anatomy 101"
-   />
-
-4. Header with Custom Right Icon (Reader Screen):
-   <TopHeader 
-     showBackButton={true}
-     title={book.title}
-     rightIcon="ellipsis-horizontal"
-     onRightIconPress={handleMenuPress}
-     backgroundColor="#fef9f3"
-     textColor="#1a2647"
-     showCart={false}
-     showNotifications={false}
-     showProfile={false}
-   />
-
-5. Minimal Header (Reader Screen - cleaner):
-   <TopHeader 
-     showBackButton={true}
-     title={book.title}
-     backgroundColor="#fef9f3"
-     textColor="#1a2647"
-     showCart={false}
-     showNotifications={false}
-     showProfile={false}
-   />
-*/

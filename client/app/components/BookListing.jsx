@@ -9,14 +9,15 @@ import {
   Dimensions,
   Animated,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
-const BookListing = ({ navigation }) => {
+const BookListing = () => {
   const [addedToCart, setAddedToCart] = useState({});
+  const router = useRouter();
 
-  // Sample data - replace with your actual data or API
   const recentBooks = [
     {
       id: '1',
@@ -73,7 +74,29 @@ const BookListing = ({ navigation }) => {
 
   const handleBookPress = (book) => {
     console.log('Book pressed:', book.title);
-    // navigation.navigate('BookDetails', { bookId: book.id });
+    
+    // Normalize the book object
+    const normalizedBook = {
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      image: book.image,
+      isOwned: book.progress !== undefined,
+      ...(book.progress !== undefined ? {
+        progress: book.progress,
+        currentChapter: book.chapter,
+      } : {
+        price: book.price,
+        originalPrice: book.originalPrice,
+        rating: book.rating,
+        reviews: book.reviews,
+      }),
+    };
+    
+    router.push({
+      pathname: '/screens/BookDetails',
+      params: { book: JSON.stringify(normalizedBook) }
+    });
   };
 
   const handleAddToCart = (book) => {
@@ -286,7 +309,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     backgroundColor: '#fff',
     marginHorizontal: 8,
-    borderRadius: 24,
+    borderRadius: 10,
     paddingTop: 16,
   },
   
