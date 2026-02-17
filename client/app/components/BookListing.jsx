@@ -6,17 +6,14 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  Dimensions,
-  Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-const { width } = Dimensions.get('window');
 
-const BookListing = () => {
-  const [addedToCart, setAddedToCart] = useState({});
-  const router = useRouter();
+export default function BookListing() {
+      const [addedToCart, setAddedToCart] = useState({});
+      const router = useRouter();
 
   const recentBooks = [
     {
@@ -72,32 +69,28 @@ const BookListing = () => {
     },
   ];
 
-  const handleBookPress = (book) => {
-    console.log('Book pressed:', book.title);
-    
-    // Normalize the book object
-    const normalizedBook = {
-      id: book.id,
-      title: book.title,
-      author: book.author,
-      image: book.image,
-      isOwned: book.progress !== undefined,
-      ...(book.progress !== undefined ? {
-        progress: book.progress,
-        currentChapter: book.chapter,
-      } : {
-        price: book.price,
-        originalPrice: book.originalPrice,
-        rating: book.rating,
-        reviews: book.reviews,
-      }),
+    const handleBookPress = (book) => {
+      const normalizedBook = {
+        id: book.id,
+        title: book.title,
+        author: book.author,
+        image: book.image,
+        isOwned: book.progress !== undefined,
+        ...(book.progress !== undefined
+          ? { progress: book.progress, currentChapter: book.chapter }
+          : {
+              price: book.price,
+              originalPrice: book.originalPrice,
+              rating: book.rating,
+              reviews: book.reviews,
+            }),
+      };
+
+      router.push({
+        pathname: '/tabs/book/BookDetails',
+        params: { book: JSON.stringify(normalizedBook) },
+      });
     };
-    
-    router.push({
-      pathname: '/screens/BookDetails',
-      params: { book: JSON.stringify(normalizedBook) }
-    });
-  };
 
   const handleAddToCart = (book) => {
     console.log('Add to cart:', book.title);
@@ -540,5 +533,3 @@ const styles = StyleSheet.create({
     height: 20,
   },
 });
-
-export default BookListing;

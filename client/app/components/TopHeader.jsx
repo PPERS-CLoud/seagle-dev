@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  Modal,
-} from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
-const TopHeader = ({ 
+const TopHeader = ({
   showBackButton = false,
   onBackPress,
   title = '',
@@ -22,56 +15,40 @@ const TopHeader = ({
   showNotifications = true,
   showCart = true,
 }) => {
-  const navigation = useNavigation();
+  const router = useRouter();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  // Your existing state for cart count, notifications, etc.
   const cartCount = 2;
   const notificationCount = 3;
 
   const handleBackPress = () => {
-    if (onBackPress) {
-      onBackPress();
-    } else {
-      navigation.goBack();
-    }
+    if (onBackPress) return onBackPress();
+    router.back();
   };
 
   const handleCartPress = () => {
-    // Navigate to cart screen
-    navigation.navigate('Cart');
+    router.push('/tabs/cart'); // change to your real route
   };
 
   const handleNotificationPress = () => {
-    // Navigate to notifications screen
-    navigation.navigate('Notifications');
-  };
-
-  const handleProfilePress = () => {
-    setShowProfileMenu(true);
+    router.push('/tabs/notifications'); // change to your real route
   };
 
   const handleProfileNavigation = () => {
     setShowProfileMenu(false);
-    navigation.navigate('Profile');
+    router.push('/tabs/profile'); // change to your real route
   };
 
   const handleLogout = () => {
     setShowProfileMenu(false);
-    // Implement your logout logic here
-    // Then navigate to Auth screen
-    navigation.navigate('Auth');
+    router.replace('/auth/Auth');
   };
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
       <View style={styles.leftSection}>
         {showBackButton ? (
-          <TouchableOpacity 
-            onPress={handleBackPress}
-            style={styles.backButton}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity onPress={handleBackPress} style={styles.backButton} activeOpacity={0.7}>
             <Ionicons name="chevron-back" size={28} color={textColor} />
           </TouchableOpacity>
         ) : (
@@ -81,37 +58,23 @@ const TopHeader = ({
         )}
       </View>
 
-      {/* Center Title (shown when title prop is provided) */}
       {title ? (
         <View style={styles.centerSection}>
-          <Text 
-            style={[styles.title, { color: textColor }]} 
-            numberOfLines={1}
-          >
+          <Text style={[styles.title, { color: textColor }]} numberOfLines={1}>
             {title}
           </Text>
         </View>
       ) : null}
 
       <View style={styles.rightSection}>
-        {/* Right Icon (custom) */}
         {rightIcon && onRightIconPress ? (
-          <TouchableOpacity 
-            onPress={onRightIconPress}
-            style={styles.iconButton}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity onPress={onRightIconPress} style={styles.iconButton} activeOpacity={0.7}>
             <Ionicons name={rightIcon} size={24} color={textColor} />
           </TouchableOpacity>
         ) : (
           <>
-            {/* Cart Icon */}
             {showCart && (
-              <TouchableOpacity 
-                style={styles.iconButton}
-                onPress={handleCartPress}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity style={styles.iconButton} onPress={handleCartPress} activeOpacity={0.7}>
                 <Ionicons name="cart-outline" size={24} color={textColor} />
                 {cartCount > 0 && (
                   <View style={styles.badge}>
@@ -121,13 +84,8 @@ const TopHeader = ({
               </TouchableOpacity>
             )}
 
-            {/* Notifications Icon */}
             {showNotifications && (
-              <TouchableOpacity 
-                style={styles.iconButton}
-                onPress={handleNotificationPress}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity style={styles.iconButton} onPress={handleNotificationPress} activeOpacity={0.7}>
                 <Ionicons name="notifications-outline" size={24} color={textColor} />
                 {notificationCount > 0 && (
                   <View style={styles.badge}>
@@ -137,51 +95,35 @@ const TopHeader = ({
               </TouchableOpacity>
             )}
 
-            {/* Profile Icon with Dropdown */}
             {showProfile && (
-              <TouchableOpacity 
-                onPress={handleProfilePress}
-                activeOpacity={0.7}
-              >
-                <Image 
-                  source={{ uri: 'https://via.placeholder.com/40' }} 
-                  style={styles.profileImage}
-                />
+              <TouchableOpacity onPress={() => setShowProfileMenu(true)} activeOpacity={0.7}>
+                <Image source={{ uri: 'https://via.placeholder.com/40' }} style={styles.profileImage} />
               </TouchableOpacity>
             )}
           </>
         )}
       </View>
 
-      {/* Profile Dropdown Menu */}
       <Modal
         visible={showProfileMenu}
-        transparent={true}
+        transparent
         animationType="fade"
         onRequestClose={() => setShowProfileMenu(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setShowProfileMenu(false)}
         >
           <View style={styles.dropdownMenu}>
-            <TouchableOpacity 
-              style={styles.dropdownItem}
-              onPress={handleProfileNavigation}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.dropdownItem} onPress={handleProfileNavigation} activeOpacity={0.7}>
               <Ionicons name="person-outline" size={20} color="#1a2647" />
               <Text style={styles.dropdownText}>Profile</Text>
             </TouchableOpacity>
-            
+
             <View style={styles.dropdownDivider} />
-            
-            <TouchableOpacity 
-              style={styles.dropdownItem}
-              onPress={handleLogout}
-              activeOpacity={0.7}
-            >
+
+            <TouchableOpacity style={styles.dropdownItem} onPress={handleLogout} activeOpacity={0.7}>
               <Ionicons name="log-out-outline" size={20} color="#FF4444" />
               <Text style={[styles.dropdownText, styles.logoutText]}>Logout</Text>
             </TouchableOpacity>

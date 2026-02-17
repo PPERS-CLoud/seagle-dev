@@ -62,17 +62,22 @@ export default function Reader() {
     setRotation(prev => (prev + 90) % 360);
   };
 
-  const handleBackPress = () => {
-    // Navigate back to BookDetails with the book data
-    router.push({
-      pathname: '/screens/BookDetails',
-      params: { book: JSON.stringify(book) }
-    });
-  };
+    const handleBackPress = () => {
+      if (typeof router.canGoBack === 'function' && router.canGoBack()) {
+        router.back();
+        return;
+      }
+
+      router.replace({
+        pathname: '/tabs/book/BookDetails',
+        params: { book: JSON.stringify(book) },
+      });
+    };
+
 
   if (!book) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <TopHeader 
           showBackButton={true}
           onBackPress={() => router.back()}
@@ -82,12 +87,12 @@ export default function Reader() {
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Book not found</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <TopHeader 
         showBackButton={true}
@@ -235,7 +240,7 @@ export default function Reader() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
