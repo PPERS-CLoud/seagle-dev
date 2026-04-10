@@ -1,5 +1,12 @@
+<<<<<<< HEAD
 import { useState } from 'react'
 import { useRouter } from 'expo-router'
+=======
+import React from 'react'
+import { useAuth } from '../context/AuthContext'
+import { useRouter } from 'expo-router'
+import { login } from '../services/api'
+>>>>>>> 99037158edb5ad25e847a076a76812966a78ad73
 import {
   View,
   Text,
@@ -10,6 +17,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+<<<<<<< HEAD
   ActivityIndicator,
   Alert,
 } from 'react-native'
@@ -37,6 +45,36 @@ export default function Auth() {
       Alert.alert('Login Failed', msg)
     } finally {
       setLoading(false)
+=======
+  Alert,
+  ActivityIndicator,
+} from 'react-native'
+import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS } from '../constants/theme'
+
+export default function Auth() {
+  const { signIn } = useAuth()
+  const router = useRouter()
+  const [email, setEmail] = React.useState('')
+  const [password, setPassword] = React.useState('')
+  const [staySigned, setStaySigned] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(false)
+
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter email and password')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const data = await login(email, password)
+      await signIn(data.user, data.token)
+      router.replace('/tabs')
+    } catch (err) {
+      Alert.alert('Login Failed', err.message || 'Invalid credentials')
+    } finally {
+      setIsLoading(false)
+>>>>>>> 99037158edb5ad25e847a076a76812966a78ad73
     }
   }
 
@@ -99,12 +137,21 @@ export default function Auth() {
         </View>
 
         <TouchableOpacity
+<<<<<<< HEAD
           style={[styles.loginButton, loading && { opacity: 0.7 }]}
           onPress={handleSignIn}
           activeOpacity={0.9}
           disabled={loading}
         >
           {loading ? (
+=======
+          style={[styles.loginButton, isLoading && { opacity: 0.7 }]}
+          onPress={handleSignIn}
+          activeOpacity={0.9}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+>>>>>>> 99037158edb5ad25e847a076a76812966a78ad73
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.loginText}>Log In</Text>
@@ -113,7 +160,11 @@ export default function Auth() {
 
         <View style={styles.signUpRow}>
           <Text style={styles.noAccount}>Don't have an account?</Text>
+<<<<<<< HEAD
           <TouchableOpacity onPress={() => router.push('/screens/SignUpScreen')}>
+=======
+          <TouchableOpacity onPress={() => router.push('../screens/SignUpScreen')}>
+>>>>>>> 99037158edb5ad25e847a076a76812966a78ad73
             <Text style={styles.signUpLink}> Sign Up</Text>
           </TouchableOpacity>
         </View>
@@ -142,37 +193,37 @@ export default function Auth() {
   )
 }
 
+// ...existing code... (keep all the existing styles exactly as they are)
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
+    padding: SPACING.xxl,
     alignItems: 'stretch',
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.bgWhite,
     flexGrow: 1,
   },
   logo: {
     width: 92,
     height: 92,
     alignSelf: 'center',
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.lg,
   },
   title: {
-    fontSize: 20,
+    fontSize: FONT_SIZES.xxl,
     textAlign: 'center',
     marginBottom: 18,
     fontWeight: '600',
-    color: '#1f2937',
+    color: COLORS.textDark,
   },
-  field: {
-    marginBottom: 10,
-  },
+  field: { marginBottom: SPACING.md },
   label: {
-    marginBottom: 8,
-    color: '#374151',
+    marginBottom: SPACING.sm,
+    color: COLORS.textBody,
     fontWeight: '500',
   },
   input: {
     borderWidth: 1,
+<<<<<<< HEAD
     borderColor: '#e5e7eb',
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -180,122 +231,81 @@ const styles = StyleSheet.create({
     fontStyle: '#ffffff9d',
     backgroundColor: '#fff',
     fontSize: 16,
+=======
+    borderColor: COLORS.borderInput,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.bgWhite,
+    fontSize: FONT_SIZES.lg,
+>>>>>>> 99037158edb5ad25e847a076a76812966a78ad73
   },
   row: {
-    marginTop: 8,
+    marginTop: SPACING.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  checkboxRow: { flexDirection: 'row', alignItems: 'center' },
   checkbox: {
     width: 18,
     height: 18,
-    borderRadius: 4,
+    borderRadius: SPACING.xs,
     borderWidth: 1,
-    borderColor: '#9ca3af',
-    marginRight: 8,
+    borderColor: COLORS.textMuted,
+    marginRight: SPACING.sm,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  checkboxChecked: {
-    backgroundColor: '#fff',
-    borderColor: '#f97316',
-  },
-  checkboxInner: {
-    width: 10,
-    height: 10,
-    backgroundColor: '#f97316',
-    borderRadius: 2,
-  },
-  checkboxLabel: {
-    color: '#374151',
-  },
-  forgot: {
-    color: '#6b7280',
-    textDecorationLine: 'underline',
-  },
+  checkboxChecked: { backgroundColor: COLORS.bgWhite, borderColor: COLORS.orange },
+  checkboxInner: { width: 10, height: 10, backgroundColor: COLORS.orange, borderRadius: 2 },
+  checkboxLabel: { color: COLORS.textBody },
+  forgot: { color: COLORS.textGray, textDecorationLine: 'underline' },
   loginButton: {
     backgroundColor: '#f7944d',
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: RADIUS.md,
     marginTop: 18,
     alignItems: 'center',
   },
-  loginText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
-  },
+  loginText: { color: COLORS.white, fontWeight: '700', fontSize: FONT_SIZES.lg },
   signUpRow: {
     marginTop: 14,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  noAccount: {
-    color: '#6b7280',
-  },
-  signUpLink: {
-    color: '#374151',
-    fontWeight: '600',
-  },
+  noAccount: { color: COLORS.textGray },
+  signUpLink: { color: COLORS.textBody, fontWeight: '600' },
   dividerRow: {
     marginTop: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#e5e7eb',
-    flex: 1,
-    marginHorizontal: 12,
-  },
-  dividerText: {
-    color: '#9ca3af',
-    fontWeight: '600',
-  },
+  divider: { height: 1, backgroundColor: COLORS.borderInput, flex: 1, marginHorizontal: SPACING.md },
+  dividerText: { color: COLORS.textMuted, fontWeight: '600' },
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
+    borderColor: COLORS.borderInput,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.md,
     marginTop: 14,
     justifyContent: 'center',
   },
-  googleIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 10,
-  },
-  googleText: {
-    fontSize: 16,
-    color: '#111827',
-  },
+  googleIcon: { width: 20, height: 20, marginRight: SPACING.md },
+  googleText: { fontSize: FONT_SIZES.lg, color: '#111827' },
   terms: {
     marginTop: 14,
-    color: '#6b7280',
-    fontSize: 12,
+    color: COLORS.textGray,
+    fontSize: FONT_SIZES.md,
     textAlign: 'center',
     lineHeight: 18,
   },
-  link: {
-    textDecorationLine: 'underline',
-    color: '#374151',
-  },
-  adminLink: {
-    marginTop: 12,
-    alignSelf: 'center',
-  },
-  adminText: {
-    color: '#374151',
-    textDecorationLine: 'underline',
-  },
+  link: { textDecorationLine: 'underline', color: COLORS.textBody },
+  adminLink: { marginTop: SPACING.md, alignSelf: 'center' },
+  adminText: { color: COLORS.textBody, textDecorationLine: 'underline' },
 })

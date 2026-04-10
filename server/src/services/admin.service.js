@@ -64,23 +64,36 @@ async function detectImagesOnPage(bookId, pageNumber) {
 async function createBook({ title, description, category, pdfFile, uploadedBy }) {
   // 1. Upload PDF to Firebase Storage -> books/pdf/
   const pdfPath = await uploadFile(pdfFile, 'books/pdf');
-  console.log('Book PDF uploaded to GCS path:', pdfPath);
+  console.log('[createBook] ✅ Step 1 DONE - PDF uploaded:', pdfPath);
 
   // 2. Generate cover image from first page -> books/covers/
   let coverPath = null;
   try {
+    console.log('[createBook] 🔄 Step 2 START - buffer size:', pdfFile.buffer?.length, 'bytes');
+    console.log('[createBook] 🔄 Calling generateCoverFromPdf...');
+    
     const coverBuffer = await generateCoverFromPdf(pdfFile.buffer);
-    coverPath = await uploadBuffer(
-      coverBuffer,
-      `books/covers/${Date.now()}_cover.png`,
-      'image/png'
-    );
-    console.log('Book cover generated and uploaded to GCS path:', coverPath);
+    
+    console.log('[createBook] 🔄 Cover buffer returned:', coverBuffer ? `${coverBuffer.length} bytes` : 'NULL/UNDEFINED');
+    
+    if (!coverBuffer || coverBuffer.length === 0) {
+      console.error('[createBook] ❌ Cover buffer is empty!');
+    } else {
+      const coverDestPath = `books/covers/${Date.now()}_cover.png`;
+      console.log('[createBook] 🔄 Uploading cover to:', coverDestPath);
+      
+      coverPath = await uploadBuffer(coverBuffer, coverDestPath, 'image/png');
+      console.log('[createBook] ✅ Step 2 DONE - Cover uploaded:', coverPath);
+    }
   } catch (err) {
-    console.warn('Failed to generate book cover:', err.message);
+    console.error('[createBook] ❌ Step 2 FAILED');
+    console.error('[createBook] ❌ Error name:', err.name);
+    console.error('[createBook] ❌ Error message:', err.message);
+    console.error('[createBook] ❌ Full stack:', err.stack);
   }
 
-  // 3. Insert into DB (stores GCS paths, not URLs)
+  // 3. Insert into DB
+  console.log('[createBook] 🔄 Step 3 - Inserting into DB, coverPath:', coverPath);
   const sql = `INSERT INTO books (title, description, cover_image, pdf_url, category, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)`;
   const params = [
     title || 'Untitled',
@@ -91,6 +104,7 @@ async function createBook({ title, description, category, pdfFile, uploadedBy })
     uploadedBy || null
   ];
   const [result] = await db.execute(sql, params);
+  console.log('[createBook] ✅ Step 3 DONE - Book ID:', result.insertId, '| coverPath in DB:', coverPath);
 
   return {
     id: result.insertId,
@@ -115,14 +129,29 @@ async function deleteBook(id) {
 // ==================== 3D MODELS ====================
 
 async function listModels() {
-  const sql = `SELECT id, name, file_url, thumbnail, category, created_at FROM models_3d WHERE file_url IS NOT NULL ORDER BY created_at DESC`;
+  const sql = `SELECT id, name, file_url, thumbnail, view_state, category, created_at FROM models_3d WHERE file_url IS NOT NULL ORDER BY created_at DESC`;
   try {
     const [rows] = await db.execute(sql);
+
+    const normalizeViewState = (raw) => {
+      if (!raw) return null;
+      if (typeof raw === 'object') return raw;
+      if (typeof raw === 'string') {
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    };
+
     return rows.map(model => ({
       id: model.id,
       name: model.name,
       file_url: model.file_url,       // GCS path
       thumbnail: model.thumbnail,       // GCS path
+      view_state: normalizeViewState(model.view_state),
       category: model.category,
       created_at: model.created_at,
     }));
@@ -186,7 +215,7 @@ async function createModel({ name, category, modelFile, uploadedBy }) {
 /**
  * Upload/update a thumbnail for a model.
  */
-async function updateModelThumbnail(modelId, thumbnailBuffer) {
+async function updateModelThumbnail(modelId, thumbnailBuffer, viewState = null) {
   const thumbnailPath = await uploadBuffer(
     thumbnailBuffer,
     `models/thumbnails/${modelId}_${Date.now()}.png`,
@@ -199,7 +228,8 @@ async function updateModelThumbnail(modelId, thumbnailBuffer) {
     await deleteFileByPath(rows[0].thumbnail);
   }
 
-  await db.execute('UPDATE models_3d SET thumbnail = ? WHERE id = ?', [thumbnailPath, modelId]);
+  const viewStateJson = viewState ? JSON.stringify(viewState) : null;
+  await db.execute('UPDATE models_3d SET thumbnail = ?, view_state = ? WHERE id = ?', [thumbnailPath, viewStateJson, modelId]);
   return thumbnailPath;
 }
 

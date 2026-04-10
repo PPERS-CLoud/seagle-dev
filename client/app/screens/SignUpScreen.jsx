@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'expo-router'
+import { register } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 import {
   View,
   Text,
@@ -15,11 +17,11 @@ import {
   Platform,
   Alert,
 } from 'react-native'
-import { useAuth } from '../../context/AuthContext'
+import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS } from '../constants/theme'
 
 export default function SignUpScreen() {
   const router = useRouter()
-  const { register } = useAuth()
+  const { signIn } = useAuth()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -31,29 +33,30 @@ export default function SignUpScreen() {
 
   const handleCreateAccount = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password.')
+      Alert.alert('Error', 'Email and password are required')
       return
     }
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match.')
+      Alert.alert('Error', 'Passwords do not match')
       return
     }
+
     setIsLoading(true)
     try {
-      await register(email.trim(), password)
+      const data = await register(email, password)
+      await signIn(data.user, data.token)
       setIsLoading(false)
       router.push('/screens/SuccessScreen')
     } catch (err) {
       setIsLoading(false)
-      const msg = err.response?.data?.message || err.message || 'Registration failed'
-      Alert.alert('Registration Failed', msg)
+      Alert.alert('Registration Failed', err.message || 'Could not create account')
     }
   }
 
   const navigateToLogin = () => {
     router.push('/')
   }
-
+  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -185,121 +188,24 @@ export default function SignUpScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 30,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 30,
-    color: '#000',
-    fontFamily: 'FunnelSans-Bold',
-  },
-  form: {
-    flex: 1,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
-    color: '#000',
-    fontFamily: 'FunnelSans-Regular',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: '#000',
-    fontFamily: 'FunnelSans-Light',
-  },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-  },
-  passwordInput: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: '#000',
-    fontFamily: 'Funnel Text',
-  },
-  eyeIcon: {
-    padding: 14,
-  },
-  eyeIconText: {
-    fontSize: 20,
-  },
-  loginLinkContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  loginText: {
-    fontSize: 14,
-    color: '#666',
-    fontFamily: 'FunnelSans-Regular',
-  },
-  loginLink: {
-    fontSize: 14,
-    color: '#FF8C42',
-    fontWeight: '600',
-    fontFamily: 'FunnelSans-Bold',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 16,
-    marginTop: 20,
-    justifyContent: 'center',
-  },
-  nextButton: {
-    backgroundColor: '#FF8C42',
-    borderRadius: 25,
-    paddingVertical: 16,
-    paddingHorizontal: 40,
-    alignItems: 'center',
-  },
-  nextButtonText: {
-    color: '#111A50',
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: 'FunnelSans-Regular',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-    minWidth: 200,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#111A50',
-    fontFamily: 'FunnelSans-Bold',
-  },
-
+  container: { flex: 1, backgroundColor: COLORS.bgWhite },
+  scrollContent: { flexGrow: 1, paddingHorizontal: SPACING.xxl, paddingTop: 40, paddingBottom: 30 },
+  title: { fontSize: FONT_SIZES.xxl, fontWeight: '600', textAlign: 'center', marginBottom: 30, color: COLORS.black, fontFamily: FONTS.bold },
+  form: { flex: 1 },
+  inputGroup: { marginBottom: SPACING.xl },
+  label: { fontSize: FONT_SIZES.body, fontWeight: '500', marginBottom: SPACING.sm, color: COLORS.black, fontFamily: FONTS.regular },
+  input: { borderWidth: 1, borderColor: COLORS.borderLight, borderRadius: RADIUS.md, paddingHorizontal: SPACING.lg, paddingVertical: 14, fontSize: FONT_SIZES.regular, color: COLORS.black, fontFamily: FONTS.light },
+  passwordContainer: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: COLORS.borderLight, borderRadius: RADIUS.md },
+  passwordInput: { flex: 1, paddingHorizontal: SPACING.lg, paddingVertical: 14, fontSize: FONT_SIZES.regular, color: COLORS.black, fontFamily: FONTS.light },
+  eyeIcon: { padding: 14 },
+  eyeIconText: { fontSize: FONT_SIZES.xxl },
+  loginLinkContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: SPACING.md },
+  loginText: { fontSize: FONT_SIZES.body, color: COLORS.textSecondary, fontFamily: FONTS.regular },
+  loginLink: { fontSize: FONT_SIZES.body, color: COLORS.orange, fontWeight: '600', fontFamily: FONTS.bold },
+  buttonContainer: { flexDirection: 'row', gap: SPACING.lg, marginTop: SPACING.xl, justifyContent: 'center' },
+  nextButton: { backgroundColor: COLORS.orange, borderRadius: 25, paddingVertical: SPACING.lg, paddingHorizontal: 40, alignItems: 'center' },
+  nextButtonText: { color: COLORS.navy, fontSize: FONT_SIZES.lg, fontWeight: '600', fontFamily: FONTS.regular },
+  modalOverlay: { flex: 1, backgroundColor: COLORS.overlay, justifyContent: 'center', alignItems: 'center' },
+  loadingContainer: { backgroundColor: COLORS.bgWhite, borderRadius: RADIUS.lg, padding: SPACING.xxxl, alignItems: 'center', minWidth: 200 },
+  loadingText: { marginTop: SPACING.lg, fontSize: FONT_SIZES.lg, color: COLORS.navy, fontFamily: FONTS.bold },
 })
