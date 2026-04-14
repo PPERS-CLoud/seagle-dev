@@ -7,7 +7,7 @@ const DEFAULT_BASE = Platform.OS === 'android'
   ? 'http://10.0.2.2:5000/api'
   : 'http://localhost:5000/api';
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: DEFAULT_BASE,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
@@ -106,4 +106,3 @@ export function getBookPdfUrl(bookId) {
   return `${DEFAULT_BASE}/admin/books/${bookId}/pdf`;
 }
 
-export default api;

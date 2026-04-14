@@ -9,11 +9,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS } from '../constants/theme';
+import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 import LoadingView from './LoadingView';
 
 const PLACEHOLDER_COVER = 'https://via.placeholder.com/200x300?text=No+Cover';
-
+const router = useRouter;
 const mapRecentBook = (b) => ({
   id: String(b.id),
   title: b.title,
