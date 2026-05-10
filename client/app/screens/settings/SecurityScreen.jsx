@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../../constants/theme';
 import TopHeader from '../../components/TopHeader';
 import { changePassword } from '../../../services/api';
@@ -47,7 +47,7 @@ export default function SecurityScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <TopHeader showBackButton={true} title="Security" showNotifications={false} showCart={false} />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
@@ -105,7 +105,7 @@ export default function SecurityScreen() {
         confirmLabel="Done"
         onConfirm={handleSuccessConfirm}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 

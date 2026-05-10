@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../../constants/theme';
 import TopHeader from '../../components/TopHeader';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,7 +12,7 @@ export default function AppearanceScreen() {
   const [selectedTZ, setSelectedTZ] = useState('(GMT+08:00) Manila');
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <TopHeader showBackButton={true} title="Appearance" showNotifications={false} showCart={false} />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         
@@ -53,7 +53,7 @@ export default function AppearanceScreen() {
         </View>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

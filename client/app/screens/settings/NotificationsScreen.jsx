@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch } from 'react-native';
 import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../../constants/theme';
 import TopHeader from '../../components/TopHeader';
 
@@ -9,7 +9,7 @@ export default function NotificationsScreen() {
   const [announcements, setAnnouncements] = useState(false);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <TopHeader showBackButton={true} title="Notifications" showNotifications={false} showCart={false} />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         
@@ -43,7 +43,7 @@ export default function NotificationsScreen() {
         </View>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
