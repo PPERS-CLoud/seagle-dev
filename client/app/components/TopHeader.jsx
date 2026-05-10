@@ -26,6 +26,10 @@ const TopHeader = ({
 
   const cartCount = 2;
   const notificationCount = 3;
+  const hasTitle = Boolean(title);
+  const showHeaderCart = showCart && !showBackButton;
+  const showHeaderNotifications = showNotifications && !showBackButton;
+  const showHeaderProfile = showProfile && !showBackButton;
 
   const handleBackPress = useCallback(() => {
     if (onBackPress) return onBackPress();
@@ -48,8 +52,8 @@ const TopHeader = ({
 
   return (
     <View style={[styles.wrapper, { backgroundColor, paddingTop: insets.top }]}>
-      <View style={styles.container}>
-        <View style={styles.leftSection}>
+      <View style={[styles.container, hasTitle && styles.titledContainer]}>
+        <View style={[styles.leftSection, hasTitle && styles.sideSection]}>
           {showBackButton ? (
             <TouchableOpacity onPress={handleBackPress} style={styles.backButton} activeOpacity={0.7}>
               <Ionicons name="chevron-back" size={28} color={textColor} />
@@ -61,7 +65,7 @@ const TopHeader = ({
           )}
         </View>
 
-        {title ? (
+        {hasTitle ? (
           <View style={styles.centerSection}>
             <Text style={[styles.title, { color: textColor }]} numberOfLines={1}>
               {title}
@@ -69,14 +73,14 @@ const TopHeader = ({
           </View>
         ) : null}
 
-        <View style={styles.rightSection}>
+        <View style={[styles.rightSection, hasTitle && styles.sideSection, hasTitle && styles.rightSideSection]}>
           {rightIcon && onRightIconPress ? (
             <TouchableOpacity onPress={onRightIconPress} style={styles.iconButton} activeOpacity={0.7}>
               <Ionicons name={rightIcon} size={24} color={textColor} />
             </TouchableOpacity>
           ) : (
             <>
-              {showCart && (
+              {showHeaderCart && (
                 <TouchableOpacity style={styles.iconButton} onPress={handleCartPress} activeOpacity={0.7}>
                   <Ionicons name="cart-outline" size={24} color={textColor} />
                   {cartCount > 0 && (
@@ -87,7 +91,7 @@ const TopHeader = ({
                 </TouchableOpacity>
               )}
 
-              {showNotifications && (
+              {showHeaderNotifications && (
                 <TouchableOpacity style={styles.iconButton} onPress={handleNotificationPress} activeOpacity={0.7}>
                   <Ionicons name="notifications-outline" size={24} color={textColor} />
                   {notificationCount > 0 && (
@@ -98,7 +102,7 @@ const TopHeader = ({
                 </TouchableOpacity>
               )}
 
-              {showProfile && (
+              {showHeaderProfile && (
                 <TouchableOpacity onPress={() => setShowProfileMenu(true)} activeOpacity={0.7}>
                   <Image source={{ uri: PLACEHOLDER_AVATAR }} style={styles.profileImage} />
                 </TouchableOpacity>
@@ -143,14 +147,34 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'relative',
+    paddingLeft: 0,
+    paddingRight: SPACING.lg,
+    paddingVertical: 6,
+  },
+  titledContainer: {
+    minHeight: 56,
     paddingHorizontal: SPACING.lg,
-    paddingVertical: 14,
   },
   leftSection: { flexDirection: 'row', flex: 1 },
-  centerSection: { flex: 1, alignItems: 'center', marginHorizontal: SPACING.md },
+  sideSection: {
+    flex: 0,
+    width: 96,
+    zIndex: 1,
+  },
+  centerSection: {
+    position: 'absolute',
+    left: 104,
+    right: 104,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   rightSection: { flexDirection: 'row', alignItems: 'center', gap: 18 },
+  rightSideSection: { justifyContent: 'flex-end' },
   backButton: { padding: 5 },
-  logoContainer: { flexDirection: 'row', alignItems: 'center' },
+  logoContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: -20 },
   logo: { width: 160, height: 56 },
   title: { fontSize: FONT_SIZES.lg, fontWeight: '700', color: COLORS.white, fontFamily: FONTS.serifBold },
   iconButton: { position: 'relative', padding: 4 },

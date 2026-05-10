@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../../constants/theme';
 import TopHeader from '../../components/TopHeader';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,7 +15,7 @@ export default function LanguageScreen() {
   const [selectedLang, setSelectedLang] = useState('en');
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <TopHeader showBackButton={true} title="Language" showNotifications={false} showCart={false} />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         
@@ -48,7 +48,7 @@ export default function LanguageScreen() {
         </View>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

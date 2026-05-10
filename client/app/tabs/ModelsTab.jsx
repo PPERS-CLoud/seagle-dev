@@ -9,7 +9,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { fetchModels, getToken } from '../../services/api';
+import { fetchModels, getModelThumbnailUrl, getToken } from '../../services/api';
 import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 import usePaginatedList from '../hooks/usePaginatedList';
 import LoadingView from '../components/LoadingView';
@@ -19,7 +19,7 @@ import ModelModal from '../components/Reading/ModelModal';
 import { PLACEHOLDER_MODEL_THUMBNAIL } from '../../constants/placeholders';
 
 const getThumbnailUrl = (m) => {
-  if (m.thumbnail) return m.thumbnail.startsWith('http') ? m.thumbnail : m.thumbnail;
+  if (m.thumbnail) return m.thumbnail.startsWith('http') ? m.thumbnail : getModelThumbnailUrl(m.id);
   return PLACEHOLDER_MODEL_THUMBNAIL;
 };
 
