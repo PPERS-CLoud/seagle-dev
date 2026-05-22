@@ -21,7 +21,9 @@ import {
   Platform,
   ActivityIndicator,
   Animated,
+  BackHandler,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -35,9 +37,16 @@ import {
 import useAnnotations from '../../hooks/useAnnotations';
 import PdfViewer from './PdfViewer';
 import ModelModal from './ModelModal';
+import FloatingAnnotationToolbar from './FloatingAnnotationToolbar';
+import SaveConfirmationModal from '../SaveConfirmationModal';
+
+const getLocalAnnotationKey = (bookId) => `readerAnnotations:${bookId}`;
 
 export default function ReadingTab({ book }) {
   const router = useRouter();
+  const pdfViewerRef = useRef(null);
+  const bookId = book?.id;
+  const pdfUrl = bookId ? getBookPdfUrl(bookId) : null;
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(null);
   const [authToken, setAuthToken] = useState(null);
@@ -47,6 +56,71 @@ export default function ReadingTab({ book }) {
   const [modelContextMap, setModelContextMap] = useState({});
   const [modelContextVersion, setModelContextVersion] = useState(0);
   const modelContextMapRef = useRef({});
+
+  // Annotation Tool State
+  const [activeTool, setActiveTool] = useState(null);
+  const [isToolbarExpanded, setIsToolbarExpanded] = useState(false);
+  const [undoTrigger, setUndoTrigger] = useState(0);
+  const [clearTrigger, setClearTrigger] = useState(0);
+  
+  // Save/Dirty State
+  const [isDirty, setIsDirty] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); // 'back' | 'close'
+  const [savedUserAnnotations, setSavedUserAnnotations] = useState({});
+
+  const handleBack = useCallback(() => {
+    if (isDirty) {
+      setPendingAction('back');
+      setShowSaveModal(true);
+      return true; // prevent immediate back
+    }
+    router.back();
+    return true;
+  }, [isDirty, router]);
+
+  // Intercept hardware back button on Android
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', handleBack);
+    return () => subscription.remove();
+  }, [handleBack]);
+
+  const handleSaveAndExit = async () => {
+    setShowSaveModal(false);
+    // Trigger annotation extraction from WebView
+    pdfViewerRef.current?.getAnnotations();
+  };
+
+  const handleAnnotationsExport = useCallback(async (data) => {
+    if (!bookId) return;
+
+    try {
+      const payload = {
+        bookId,
+        updatedAt: new Date().toISOString(),
+        pages: data || {},
+      };
+      await AsyncStorage.setItem(getLocalAnnotationKey(bookId), JSON.stringify(payload));
+      setSavedUserAnnotations(payload.pages);
+      setIsDirty(false);
+
+      if (pendingAction === 'back') {
+        router.back();
+      }
+      setPendingAction(null);
+    } catch (err) {
+      console.warn('[ReadingTab] Failed to save local annotations:', err.message);
+    }
+  }, [bookId, pendingAction, router]);
+
+  const handleDiscardAndExit = () => {
+    setShowSaveModal(false);
+    setIsDirty(false);
+    if (pendingAction === 'back') {
+      router.back();
+    }
+    setPendingAction(null);
+  };
 
   // Animation constants
   const HEADER_HEIGHT = Platform.OS === 'ios' ? 110 : 80;
@@ -65,18 +139,9 @@ export default function ReadingTab({ book }) {
     extrapolate: 'clamp',
   });
 
-  const bookId = book?.id;
-  const pdfUrl = bookId ? getBookPdfUrl(bookId) : null;
-
   useEffect(() => {
     modelContextMapRef.current = modelContextMap;
   }, [modelContextMap]);
-
-  // Debug: confirm the exact PDF URL handed to the WebView reader.
-  useEffect(() => {
-    console.log('[ReadingTab] book:', book);
-    console.log('[ReadingTab] bookId:', bookId, 'pdfUrl:', pdfUrl);
-  }, [book, bookId, pdfUrl]);
 
   // Fetch annotations for the current page
   const { annotations, loading: annotLoading } = useAnnotations(
@@ -98,9 +163,6 @@ export default function ReadingTab({ book }) {
         if (!token) {
           throw new Error('No saved session');
         }
-
-        // refreshToken verifies the current token and returns a fresh one.
-        // Avoid /auth/profile here because older/running backends may not expose it.
         const newToken = await refreshToken();
         if (!cancelled) setAuthToken(newToken);
       } catch (err) {
@@ -123,6 +185,36 @@ export default function ReadingTab({ book }) {
   useEffect(() => {
     setCurrentPage(1);
     setTotalPages(null);
+  }, [bookId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLocalAnnotations() {
+      if (!bookId) {
+        setSavedUserAnnotations({});
+        return;
+      }
+
+      try {
+        const raw = await AsyncStorage.getItem(getLocalAnnotationKey(bookId));
+        if (cancelled) return;
+
+        if (!raw) {
+          setSavedUserAnnotations({});
+          return;
+        }
+
+        const parsed = JSON.parse(raw);
+        setSavedUserAnnotations(parsed?.pages || {});
+      } catch (err) {
+        console.warn('[ReadingTab] Failed to load local annotations:', err.message);
+        if (!cancelled) setSavedUserAnnotations({});
+      }
+    }
+
+    loadLocalAnnotations();
+    return () => { cancelled = true; };
   }, [bookId]);
 
   /* ---------- Callbacks ---------- */
@@ -154,14 +246,11 @@ export default function ReadingTab({ book }) {
 
     const key = String(modelContext.id);
     const existing = modelContextMapRef.current[key];
-    const existingBase64Length = existing?.modelBase64?.length ?? 0;
-    const nextBase64Length = modelContext?.modelBase64?.length ?? 0;
     const unchanged =
       existing &&
       existing.localFileUri === modelContext.localFileUri &&
       existing.thumbnail === modelContext.thumbnail &&
       existing.name === modelContext.name &&
-      existingBase64Length === nextBase64Length &&
       JSON.stringify(existing.view_state ?? null) === JSON.stringify(modelContext.view_state ?? null);
 
     if (unchanged) return;
@@ -218,19 +307,11 @@ export default function ReadingTab({ book }) {
     return () => { cancelled = true; };
   }, [annotations, storeModelContext]);
 
-  const goToPage = useCallback(
-    (page) => {
-      if (page < 1 || (totalPages && page > totalPages)) return;
-      setCurrentPage(page);
-    },
-    [totalPages],
-  );
-
   const handleError = useCallback((message) => {
     console.error('[ReadingTab] PDF error:', message);
   }, []);
 
-  /* ---------- Loading / Error states ---------- */
+  /* ---------- Render ---------- */
   if (!book) {
     return (
       <View style={styles.centered}>
@@ -258,7 +339,6 @@ export default function ReadingTab({ book }) {
     );
   }
 
-  /* ---------- Render ---------- */
   return (
     <View style={styles.container}>
       {/* Top Header Bar */}
@@ -269,7 +349,7 @@ export default function ReadingTab({ book }) {
           opacity: headerOpacity,
         }
       ]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+        <TouchableOpacity onPress={handleBack} style={styles.headerBtn}>
           <Ionicons name="chevron-back" size={24} color={COLORS.navy} />
         </TouchableOpacity>
 
@@ -279,7 +359,7 @@ export default function ReadingTab({ book }) {
           </Text>
         </View>
 
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+        <TouchableOpacity onPress={handleBack} style={styles.headerBtn}>
           <Ionicons name="close" size={24} color={COLORS.navy} />
         </TouchableOpacity>
       </Animated.View>
@@ -287,30 +367,33 @@ export default function ReadingTab({ book }) {
       {/* PDF Viewer */}
       <View style={[styles.pdfContainer, selectedAnnotation && styles.pdfContainerDimmed]}>
         <PdfViewer
+          ref={pdfViewerRef}
           pdfUrl={pdfUrl}
           authToken={authToken}
           page={currentPage}
           annotations={annotations}
+          userAnnotations={savedUserAnnotations}
           modelContextMap={modelContextMap}
           modelContextVersion={modelContextVersion}
+          activeTool={activeTool}
+          onUndoRequest={undoTrigger}
+          onClearRequest={clearTrigger}
+          onDirty={() => setIsDirty(true)}
+          onAnnotationsExport={handleAnnotationsExport}
           onPageLoaded={handlePageLoaded}
           onHotspotClick={handleHotspotClick}
           onScroll={handleScroll}
           onRequestModelContext={async (modelId) => {
             if (modelId == null) return null;
-
             const cached = modelContextMap[String(modelId)] || modelContextMap[modelId] || null;
             if (cached?.modelBase64) return cached;
-
             const matchedAnnotation = annotations.find((annotation) => String(annotation.model_id) === String(modelId));
             const model = matchedAnnotation?.model || null;
             if (!model?.localFileUri) return cached;
-
             try {
               const base64 = await FileSystem.readAsStringAsync(model.localFileUri, {
                 encoding: FileSystem.EncodingType.Base64,
               });
-
               const context = {
                 id: model.id,
                 name: model.name,
@@ -319,7 +402,6 @@ export default function ReadingTab({ book }) {
                 view_state: model.view_state ?? null,
                 modelBase64: base64,
               };
-
               storeModelContext(context);
               return context;
             } catch (err) {
@@ -330,42 +412,28 @@ export default function ReadingTab({ book }) {
           onError={handleError}
         />
 
-        {/* Page info badge (top-right overlay) */}
-        {totalPages && (
-          <Animated.View style={[
-            styles.pageBadge,
-            { transform: [{ translateY: headerTranslate }] }
-          ]}>
-            <Text style={styles.pageBadgeText}>
-              {currentPage} / {totalPages}
-            </Text>
-          </Animated.View>
+        {/* Floating Annotation Toolbar */}
+        {!selectedAnnotation && (
+          <FloatingAnnotationToolbar
+            activeTool={activeTool}
+            expanded={isToolbarExpanded}
+            onToggleExpanded={() => setIsToolbarExpanded(!isToolbarExpanded)}
+            onSelectTool={(tool) => {
+              setActiveTool(activeTool === tool ? null : tool);
+            }}
+            onUndo={() => setUndoTrigger((prev) => prev + 1)}
+            onClear={() => setClearTrigger((prev) => prev + 1)}
+            onCancel={() => setActiveTool(null)}
+          />
         )}
 
-        {/* Annotation count badge (top-left overlay) */}
-        {annotations.length > 0 && (
-          <Animated.View style={[
-            styles.annotBadge,
-            { transform: [{ translateY: headerTranslate }] }
-          ]}>
-            <Ionicons name="cube-outline" size={12} color={COLORS.white} />
-            <Text style={styles.annotBadgeText}>
-              {annotations.length} model{annotations.length !== 1 ? 's' : ''}
-            </Text>
-          </Animated.View>
-        )}
-
-        {/* Annotation loading indicator */}
-        {annotLoading && (
-          <View style={styles.annotLoading}>
-            <ActivityIndicator size="small" color={COLORS.white} />
-          </View>
-        )}
       </View>
 
       {/* 3D Model Modal */}
       <ModelModal
         visible={!!selectedAnnotation}
+        activeTool={activeTool}
+        onSelectTool={setActiveTool}
         model={
           selectedAnnotation?.model ||
           (selectedAnnotation
@@ -382,6 +450,14 @@ export default function ReadingTab({ book }) {
         onModelContextReady={handleModelContextReady}
         onClose={handleCloseModal}
         presentation="reader"
+      />
+
+      {/* Save Confirmation Modal */}
+      <SaveConfirmationModal
+        visible={showSaveModal}
+        onSave={handleSaveAndExit}
+        onDiscard={handleDiscardAndExit}
+        onCancel={() => setShowSaveModal(false)}
       />
     </View>
   );
@@ -441,47 +517,12 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     marginTop: SPACING.md,
   },
-
-  /* PDF area */
   pdfContainer: {
     flex: 1,
     position: 'relative',
   },
   pdfContainerDimmed: {
     opacity: 0.42,
-  },
-  pageBadge: {
-    position: 'absolute',
-    top: SPACING.md,
-    right: SPACING.md,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.pill,
-  },
-  pageBadgeText: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.xs,
-    fontWeight: '600',
-    fontFamily: FONTS.medium,
-  },
-  annotBadge: {
-    position: 'absolute',
-    top: SPACING.md,
-    left: SPACING.md,
-    backgroundColor: 'rgba(74, 144, 217, 0.85)',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.pill,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  annotBadgeText: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.xs,
-    fontWeight: '600',
-    fontFamily: FONTS.medium,
   },
   annotLoading: {
     position: 'absolute',
