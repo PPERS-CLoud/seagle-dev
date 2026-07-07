@@ -1,11 +1,11 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
-import Reader from './Reader';
+import Reader from '../Reader';
 import { useLocalSearchParams } from 'expo-router';
 
 // Mock ReadingTab to avoid complex WebView interactions and focus on Reader's job
 // Or we can test Reader with actual ReadingTab if we mock the child components.
-jest.mock('../components/Reading/ReadingTab', () => {
+jest.mock('../../components/Reading/ReadingTab', () => {
   const { View, Text } = require('react-native');
   return function MockReadingTab({ book }) {
     return (
