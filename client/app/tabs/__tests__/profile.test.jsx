@@ -1,17 +1,17 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
-import ProfileScreen from './profile';
-import { fetchProfile } from '../../services/api';
-import { useAuth } from '../context/AuthContext';
+import ProfileScreen from '../profile';
+import { fetchProfile } from '../../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
 
-jest.mock('../../services/api', () => ({
+jest.mock('../../../services/api', () => ({
   fetchProfile: jest.fn(),
   updateProfile: jest.fn(),
   changePassword: jest.fn(),
 }));
 
-jest.mock('../context/AuthContext', () => ({
+jest.mock('../../context/AuthContext', () => ({
   useAuth: jest.fn(),
 }));
 

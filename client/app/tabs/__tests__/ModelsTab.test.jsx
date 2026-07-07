@@ -1,16 +1,16 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
-import ModelsTab from './ModelsTab';
-import { fetchModels } from '../../services/api';
+import ModelsTab from '../ModelsTab';
+import { fetchModels } from '../../../services/api';
 
-jest.mock('../../services/api', () => ({
+jest.mock('../../../services/api', () => ({
   fetchModels: jest.fn(),
   getModelThumbnailUrl: jest.fn(id => `http://mock/thumb/${id}`),
   getToken: jest.fn().mockResolvedValue('fake-token'),
 }));
 
 // We can mock ModelModal to simplify testing since it uses WebView which we already globally mocked
-jest.mock('../components/Reading/ModelModal', () => {
+jest.mock('../../components/Reading/ModelModal', () => {
   const { View, Text, TouchableOpacity } = require('react-native');
   return function MockModelModal({ visible, model, onClose }) {
     if (!visible) return null;

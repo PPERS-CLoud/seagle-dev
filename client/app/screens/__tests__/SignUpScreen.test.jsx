@@ -1,13 +1,13 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
-import SignUpScreen from './SignUpScreen';
-import { register } from '../../services/api';
-import { useAuth } from '../context/AuthContext';
+import SignUpScreen from '../SignUpScreen';
+import { register } from '../../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 
-jest.mock('../../services/api');
-jest.mock('../context/AuthContext');
+jest.mock('../../../services/api');
+jest.mock('../../context/AuthContext');
 
 describe('SignUpScreen', () => {
   let mockPush;

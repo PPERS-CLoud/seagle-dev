@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
-import TextbooksTab from './TextbooksTab';
-import { fetchBooks } from '../../services/api';
+import TextbooksTab from '../TextbooksTab';
+import { fetchBooks } from '../../../services/api';
 import { useRouter } from 'expo-router';
 
-jest.mock('../../services/api', () => ({
+jest.mock('../../../services/api', () => ({
   fetchBooks: jest.fn(),
   getBookCoverUrl: jest.fn(id => `http://mock/cover/${id}`),
 }));
